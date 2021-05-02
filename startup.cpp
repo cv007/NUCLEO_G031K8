@@ -42,7 +42,7 @@ static constexpr u32* stackTop          { &_estack };
 static volatile u32&  vtor              { *(reinterpret_cast<u32*>(0xE000ED08)) };
 
 //for delay functions
-static constexpr u32  FCPU              {1000000}; //1MHz at reset
+static constexpr u32  FCPU              {16000000}; //16MHz at reset
 static constexpr u32  CYCLES_PER_LOOP   {4};
 
 /*-----------------------------------------------------------------------------
