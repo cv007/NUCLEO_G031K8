@@ -157,15 +157,6 @@ deinit          ()
                 return *this;
                 }
 
-                //get info for a GpioPin instance
-                //(like a reverse lookup if you only have the name)
-                II auto
-port            () { return port_; }
-                II auto
-pin             () { return pin_; }
-                II auto
-pinmask         () { return pinmask_; }
-
                 //read
                 II auto
 pinVal          () { return reg_.IDR bitand pinmask_; }
