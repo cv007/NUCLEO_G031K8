@@ -36,7 +36,7 @@ struct GpioPort : PeripheralAddresses {
                 struct RegPort {
                 u32 MODER; u32 OTYPER; u32 OSPEEDR; u32 PUPDR;
                 u32 IDR;   u32 ODR;    u16 BSRsR;   u16 BSRrR;
-                u32 LCKR;  u64 AFR;    u32 BRR;
+                u32 LCKR;  u32 AFR[2]; u32 BRR;
                 };
 
                 u8 port_; //port number(letter)
@@ -128,7 +128,10 @@ speed           (PINS::SPEED e)
                 II GpioPin&
 altFunc         (PINS::ALTFUNC e)
                 {
-                reg_.AFR = (reg_.AFR bitand compl (15<<(4*pin_))) bitor (e<<(4*pin_));
+                auto& ptr = reg_.AFR[pin_>7 ? 1 : 0];
+                auto bm = compl (15<<(4*(pin_ bitand 7)));
+                auto bv = e<<(4*(pin_ bitand 7));
+                ptr = (ptr bitand bm) bitor bv;                    
                 mode( PINS::ALTERNATE );
                 return *this;
                 }
