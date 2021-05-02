@@ -18,4 +18,4 @@
 
 #### An earlier all-in-one file variation can be seen in the online compiler - https://godbolt.org/z/hf63Wf5qY where it is now split out into appropriate headers here.
 
-#### So, you do not need to stick to the manufacturers way of doing things if you prefer something else (better). The C++ language is also quite nice and as seen here there is no C++ standard library in use and there is no requirement to use it. You still have a limited mcu, so you weigh the cost of speed/space vs ease of use. The C++ language itself has quite a nice toolbox, and an mcu is a good fit for its use. 
+#### So, you do not need to stick to the manufacturers way of doing things if you prefer something better. The C++ language is also quite nice and as seen here there is no C++ standard library in use and there is no requirement to use it. The C++ language itself has quite a nice toolbox, and is a good fit for the mcu. 
