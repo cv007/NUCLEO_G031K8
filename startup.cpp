@@ -2,14 +2,18 @@
 //no other includes needed
 
 /*-----------------------------------------------------------------------------
-    types
+    types and defines
 -----------------------------------------------------------------------------*/
 using u32 = unsigned int;
+using i32 = int;
+using u16 = unsigned short;
+using i16 = short;
 using flashVectorT = struct { u32* stackTop; void(*vfunc[3])(); };
 
+#define IIA [[ gnu::always_inline ]] inline static auto
 
 /*-----------------------------------------------------------------------------
-    vars
+    vars and constants
     (.ramvector section added to linker script, the section starts at the
     first location in ram so is aligned properly, _sramvector/_eramvector
     values added so we can init ram vector table in this startup code)
@@ -35,8 +39,11 @@ static constexpr u32* bssEnd            { &_ezero };
 static constexpr u32* stackTop          { &_estack };
 
 //SCB.VTOR (vector table offset)
-static volatile u32& vtor     { *(reinterpret_cast<u32*>(0xE000ED08)) };
+static volatile u32&  vtor              { *(reinterpret_cast<u32*>(0xE000ED08)) };
 
+//for delay functions
+static constexpr u32  FCPU              {1000000}; //1MHz at reset
+static constexpr u32  CYCLES_PER_LOOP   {4};
 
 /*-----------------------------------------------------------------------------
     function declarations
@@ -61,19 +68,22 @@ flashVectorT flashVector{ stackTop, {resetFunc, resetFunc, resetFunc} };
 /*-----------------------------------------------------------------------------
     functions
 -----------------------------------------------------------------------------*/
-                static void //start address, end address, value
+                #pragma GCC push_options
+                #pragma GCC optimize ("-Os")
+
+                IIA
+delayCycles     (volatile i32 n) { while(n -= CYCLES_PER_LOOP, n>0){} }
+
+                IIA 
+delayMS         (u16 ms){ delayCycles(FCPU/1000*ms-1); }
+
+                #pragma GCC pop_options
+
+                IIA //start address, end address, value
 setmem          (u32* s, u32* e, u32 v) { while(s < e) *s++ = v; }
 
-                static void //start address, end address, values
+                IIA //start address, end address, values
 cpymem          (u32* s, u32* e, u32* v) { while(s < e) *s++ = *v++; }
-
-                static void
-startDelay      ()
-                {
-                //allow time for swd hot-plugging if things go wrong
-                //comment out when no longer wanted/needed
-                volatile u32 n = 0x10000*10; while(n--); //~5 sec
-                }
 
                 //unhandled interrupt, or return from main
                 //do something here to debug, or to recover when no longer
@@ -82,7 +92,7 @@ startDelay      ()
                 static void
 errorFunc       () { while(true); }
 
-                static void
+                IIA
 initVectors     ()
                 {
                 //set all ram vectors to default function (errorFunc)
@@ -92,7 +102,7 @@ initVectors     ()
                 vtor = (u32)ramvectorStart;
                 }
 
-                static void
+                IIA
 initRam         ()
                 {
                 //init data from flash
@@ -105,7 +115,7 @@ initRam         ()
                 static void
 resetFunc       ()
                 {
-                startDelay();   //time to allow swd hot-plug
+                delayMS(5000);  //time to allow swd hot-plug
                 initVectors();  //setup ram vectors
                 initRam();      //normal data/bss init
 
