@@ -1,0 +1,2 @@
+options="-mcpu=cortex-m0plus -Os -fdata-sections -ffunction-sections -W -Wall"
+

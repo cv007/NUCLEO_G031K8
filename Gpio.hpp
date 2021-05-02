@@ -1,0 +1,201 @@
+//Gpio.hpp
+#pragma once
+
+#include "MyStm32.hpp"
+
+/*--------------------------------------------------------------
+    enum additions to the PINS namespace for GpioPin use
+--------------------------------------------------------------*/
+namespace PINS {
+
+                enum
+MODE            { INPUT, OUTPUT, ALTERNATE, ANALOG };
+                enum
+OTYPE           { PUSHPULL, ODRAIN };
+                enum
+PULL            { NOPULL, PULLUP, PULLDOWN };
+                enum
+SPEED           { SPEED0, SPEED1, SPEED2, SPEED3 }; //VLOW to VHIGH
+                enum
+ALTFUNC         { AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7 };
+                enum
+INVERT          { HIGHISON, LOWISON };
+
+};
+
+/*=============================================================
+    GpioPort class
+=============================================================*/
+struct GpioPort : PeripheralAddresses {
+
+//-------------|
+    protected:
+//-------------|
+
+                //gpio port register layout
+                struct RegPort {
+                u32 MODER; u32 OTYPER; u32 OSPEEDR; u32 PUPDR;
+                u32 IDR;   u32 ODR;    u16 BSRsR;   u16 BSRrR;
+                u32 LCKR;  u64 AFR;    u32 BRR;
+                };
+
+                u8 port_; //port number(letter)
+
+//-------------|
+    public:
+//-------------|
+
+                volatile RegPort& reg_; //public, allows direct reg access
+
+                II
+GpioPort        (PINS::PIN pin)
+                : port_( pin/16 ),
+                  reg_( *(reinterpret_cast<RegPort*>( GPIO_BASE + GPIO_SPACING*(pin/16)) ) )
+                {
+                }
+
+                II auto
+enable          () { *(volatile u32*)RCC_IOPENB or_eq (1<<port_); }
+
+                //lock pin(s) on this port (bitmask)
+                II auto
+lock            (u16 bm)
+                {
+                u32 vL = (1<<16) bitor bm;
+                reg_.LCKR = vL;
+                reg_.LCKR = bm;
+                reg_.LCKR = vL;
+                return (reg_.LCKR bitand vL) == vL;
+                }
+
+};
+
+/*=============================================================
+    GpioPin class
+=============================================================*/
+struct GpioPin : GpioPort {
+
+//-------------|
+    private:
+//-------------|
+
+                u8 pin_;        //0-15
+                u16 pinmask_;   //for bsr/bsrr
+                bool invert_;   //so can do on/off
+
+//-------------|
+    public:
+//-------------|
+
+                //no init, rcc clock enabled by default unless not wanted
+                II
+GpioPin         (PINS::PIN pin, PINS::INVERT inv = PINS::HIGHISON, bool clken = true)
+                : GpioPort(pin), pin_(pin%16), pinmask_(1<<(pin%16)), invert_(inv)
+                {
+                if( clken ) enable();
+                }
+
+                //properities
+                II GpioPin&
+mode            (PINS::MODE e)
+                {
+                reg_.MODER = (reg_.MODER bitand compl (3<<(2*pin_))) bitor (e<<(2*pin_));
+                return *this;
+                }
+
+                II GpioPin&
+outType         (PINS::OTYPE e)
+                {
+                if( e == PINS::ODRAIN ) reg_.OTYPER or_eq pinmask_;
+                else reg_.OTYPER and_eq compl pinmask_;
+                return *this;
+                }
+
+                II GpioPin&
+pull            (PINS::PULL e)
+                {
+                reg_.PUPDR = (reg_.PUPDR bitand compl (3<<(2*pin_))) bitor (e<<(2*pin_));
+                return *this;
+                }
+
+                II GpioPin&
+speed           (PINS::SPEED e)
+                {
+                reg_.OSPEEDR = (reg_.OSPEEDR bitand compl (3<<(2*pin_))) bitor (e<<(2*pin_));
+                return *this;
+                }
+
+                II GpioPin&
+altFunc         (PINS::ALTFUNC e)
+                {
+                reg_.AFR = (reg_.AFR bitand compl (15<<(4*pin_))) bitor (e<<(4*pin_));
+                mode( PINS::ALTERNATE );
+                return *this;
+                }
+
+                II GpioPin&
+lock            () { GpioPort::lock(pinmask_); return *this; }
+
+                //back to reset state- if reconfuring pin from an unknown state
+                II GpioPin&
+deinit          ()
+                {
+                mode(PINS::ANALOG).outType(PINS::PUSHPULL).altFunc(PINS::AF0)
+                    .speed(PINS::SPEED0).pull(PINS::NOPULL);
+                low();
+                //if we are on the sw port, and is a sw pin
+                //then we have a different reset state
+                if ( port_ == (PINS::SWCLK/16) and (pin_ == (PINS::SWCLK bitand 15)) ) {
+                    mode( PINS::ALTERNATE ).pull( PINS::PULLDOWN );
+                    }
+                if ( port_ == (PINS::SWCLK/16) and (pin_ == (PINS::SWDIO bitand 15)) ) {
+                    mode( PINS::ALTERNATE ).pull( PINS::PULLUP ).speed( PINS::SPEED3 );
+                    }
+                return *this;
+                }
+
+                //get info for a GpioPin instance
+                //(like a reverse lookup if you only have the name)
+                II auto
+port            () { return port_; }
+                II auto
+pin             () { return pin_; }
+                II auto
+pinmask         () { return pinmask_; }
+
+                //read
+                II auto
+pinVal          () { return reg_.IDR bitand pinmask_; }
+                II auto
+latVal          () { return reg_.ODR bitand pinmask_; }
+
+                II auto
+isHigh          () { return pinVal(); }
+                II auto
+isLow           () { return not isHigh(); }
+                II auto
+isOn            () { return ( invert_ == PINS::LOWISON ) ? isLow() : isHigh(); }
+                II auto
+isOff           () { return not isOn(); }
+
+                //write
+                II GpioPin&
+high            () { reg_.BSRsR = pinmask_; return *this; }
+                II GpioPin&
+low             () { reg_.BRR = pinmask_; return *this; }
+
+                II GpioPin&
+on              () { invert_ == PINS::LOWISON ? low() : high(); return *this; }
+                II GpioPin&
+off             () { invert_ == PINS::LOWISON ? high() : low(); return *this; }
+                II GpioPin&
+on              (bool tf) { tf ? on() : off(); return *this; }
+                II GpioPin&
+toggle          () { latVal() ? low() : high(); return *this; }
+                II GpioPin&
+pulse           () { toggle(); toggle(); return *this; }
+
+};
+
+
+
