@@ -67,11 +67,4 @@ Uart            (usartT u, u32 baud)
                 txOn();
                 }
 
-                //or all-in-one config
-//                 II
-// Uart            (usartCfgT u)
-//                 : Uart( u.uart, u.baud )
-//                 {
-//                 }
-
 };
