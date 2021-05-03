@@ -9,7 +9,7 @@ struct PeripheralAddresses {
                 enum
                 {
                 RCC_BASE = 0x40021000,
-                RCC_IOPENB = 0x40021034,
+                RCC_IOPENR = 0x40021034,
 
                 GPIO_BASE = 0x50000000,
                 GPIO_SPACING = 0x400,
