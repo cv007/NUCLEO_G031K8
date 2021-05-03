@@ -2,9 +2,6 @@
 /*-------------------------------------------------------------
     stm32g031k8 - nucleo32
 --------------------------------------------------------------*/
-//crude delay
-static void delay(volatile u32 n){ while(n--){} }
-
 
 #if 1
 /*-------------------------------------------------------------
@@ -12,7 +9,6 @@ static void delay(volatile u32 n){ while(n--){} }
 --------------------------------------------------------------*/
 //D12 on Nucleo
 auto sw = GpioPin(board.D[12],LOWISON).mode(INPUT).pull(PULLUP);
-
 
                 int
 main            ()
@@ -22,10 +18,10 @@ main            ()
                 //does not change (led keeps working)
                 //.lock() must be working
 
-                u32 n = 0;
+                auto n = 0;
                 while( true ){
                     //toggle rate depends on switch
-                    delay( sw.isOn() ? 500000 : 500000*5 );
+                    delayMS( sw.isOn() ? 100 : 500 );
                     board.led.toggle();
                     uart.print("count: %u\r\n", n++);
                     }
@@ -38,6 +34,9 @@ main            ()
 /*-------------------------------------------------------------
     main
 --------------------------------------------------------------*/
+//crude delay
+static void delay(volatile u32 n){ while(n--){} }
+
 //arrays of pins
 GpioPin switches[]{ //nucleo board labels D9-D12
     { GpioPin(board.D[12],LOWISON).mode(INPUT).pull(PULLUP) },
@@ -76,23 +75,20 @@ printInfo       (u32 swv, u32 t)
 main            ()
                 {
                 u32 swState = 0;
-                const u32 tbase = 500000;
+                const u32 tbase = 100;
 
                 while( true ) {
                     //get all switch states
                     bool changed = switchValues(swState);
                     //calculate delay value
-                    auto t = tbase + swState*200000;
+                    auto t = tbase + swState*200;
                     //print info if switch state changes
                     if( changed ) printInfo( swState, t );
                     //delay and toggle led
-                    delay( t );
+                    delayMS( t );
                     board.led.toggle();
                     }
 
                 }
 
 #endif
-
-
-
