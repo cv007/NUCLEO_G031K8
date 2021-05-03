@@ -1,6 +1,6 @@
 # STM32 NUCLEO G031K8
 ----------
-#### This is a minimal example for the Nucleo32 board with the g031k8. There are 2 source files (main.cpp, startup.cpp), header files and a linker script in the root folder. No manufacturer code or headers are used.
+#### This is a minimal example for the Nucleo32 board with the g031k8. There are 2 source files (main.cpp, startup.cpp), header files and a linker script in the root folder. No manufacturer code or headers are used. See project NUCLEO_G031K8_B where cmsis and manufacturer headers files are used.
 
 #### The script folder contains bash scripts for compiling, so no makefile is needed and simply running _./update.sh_ is all that is needed. Folders will be created to contain the object files (obj), lss files (lss), and bin files (bin). The programming step can be changed as needed, and in this case is using the nucleo virtual drive by simply cp'ing the bin file to the drive.
 
@@ -19,3 +19,5 @@
 #### An earlier all-in-one file variation can be seen in the online compiler - https://godbolt.org/z/hf63Wf5qY where it is now split out into appropriate headers here.
 
 #### So, you do not need to stick to the manufacturers way of doing things if you prefer something better. The C++ language is also quite nice and as seen here there is no C++ standard library in use and there is no requirement to use it. The C++ language itself has quite a nice toolbox, and is a good fit for the mcu. 
+
+#### Although doing everything on your own is possible as shown here, you will soon run into the problem of being overwhelmed with things that need to be done on your own. The companion project NUCLEO_G031K8_B uses the CMSIS files and the mcu header from ST to make things easier (not hard to find either). Its a little less desirable to have more files to find the meaning of things, but in this case there is only a single header where the register structs are located as oposed to creating these structs individually in the peripheral class, and the peripheral base addresses woud otherwise have to be created in a seperate file anyway. The C++ code stays the same, but now we get some help in the mundane area of mcu registers and addresses.
