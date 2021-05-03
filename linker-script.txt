@@ -15,8 +15,8 @@ MEMORY {
 STACK_SIZE = DEFINED(STACK_SIZE) ? STACK_SIZE : DEFINED(__stack_size__) ? __stack_size__ : 0x0200;
 HEAP_SIZE = DEFINED(HEAP_SIZE) ? HEAP_SIZE : DEFINED(__heap_size__) ? __heap_size__ : 0;
 
-/* set vector size for ram vector, 16 + 0-18 */
-VECTORS_SIZE = (16 + 19) *4;
+/* set vector size for ram vector, 16 + 0-29 */
+VECTORS_SIZE = (16 + 30) *4;
 
 SECTIONS {
     .text : {
