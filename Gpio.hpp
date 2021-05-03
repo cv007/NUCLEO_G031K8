@@ -55,7 +55,7 @@ GpioPort        (PINS::PIN pin)
                 }
 
                 II auto
-enable          () { *(volatile u32*)RCC_IOPENB or_eq (1<<port_); }
+enable          () { *(volatile u32*)RCC_IOPENR or_eq (1<<port_); }
 
                 //lock pin(s) on this port (bitmask)
                 II auto
