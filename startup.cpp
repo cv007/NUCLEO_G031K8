@@ -19,30 +19,30 @@ using flashVectorT = struct { u32* stackTop; void(*vfunc[3])(); };
     values added so we can init ram vector table in this startup code)
 -----------------------------------------------------------------------------*/
 //linker script symbols
-extern u32 _etext;          //end of text
-extern u32 _sramvector;     //start of ram vector
-extern u32 _eramvector;
-extern u32 _srelocate;      //data (initialized)
-extern u32 _erelocate;
-extern u32 _szero;          //bss (zeroed)
-extern u32 _ezero;
-extern u32 _estack;
+extern u32 _etext       [1];    //end of text
+extern u32 _sramvector  [1];    //start of ram vector
+extern u32 _eramvector  [1];
+extern u32 _srelocate   [1];    //data (initialized)
+extern u32 _erelocate   [1];
+extern u32 _szero       [1];    //bss (zeroed)
+extern u32 _ezero       [1];
+extern u32 _estack      [1];
 
 //setup linker symbols as u32 pointers (addresses), and nicer names
-static constexpr u32* dataFlashStart    { &_etext };
-static constexpr u32* ramvectorStart    { &_sramvector };
-static constexpr u32* ramvectorEnd      { &_eramvector };
-static constexpr u32* dataStart         { &_srelocate };
-static constexpr u32* dataEnd           { &_erelocate };
-static constexpr u32* bssStart          { &_szero };
-static constexpr u32* bssEnd            { &_ezero };
-static constexpr u32* stackTop          { &_estack };
+static constexpr auto dataFlashStart    { _etext };
+static constexpr auto ramvectorStart    { _sramvector };
+static constexpr auto ramvectorEnd      { _eramvector };
+static constexpr auto dataStart         { _srelocate };
+static constexpr auto dataEnd           { _erelocate };
+static constexpr auto bssStart          { _szero };
+static constexpr auto bssEnd            { _ezero };
+static constexpr auto stackTop          { _estack };
 
 //SCB.VTOR (vector table offset)
-static volatile u32&  vtor              { *(reinterpret_cast<u32*>(0xE000ED08)) };
+static volatile u32&  VTOR              { *(u32*)0xE000ED08 };
 
 //for delay functions
-static constexpr u32  FCPU              {16000000}; //16MHz at reset
+static constexpr u32  FCPU_MHZ          {16}; //16MHz at reset
 static constexpr u32  CYCLES_PER_LOOP   {4};
 
 /*-----------------------------------------------------------------------------
@@ -50,6 +50,7 @@ static constexpr u32  CYCLES_PER_LOOP   {4};
 -----------------------------------------------------------------------------*/
 int main();
 static void resetFunc();
+static void errorFunc();
 extern "C" void __libc_init_array();
 
 
@@ -62,7 +63,7 @@ extern "C" void __libc_init_array();
     section is KEEP in linker script, 'used' keeps compiler from complaining
 -----------------------------------------------------------------------------*/
 [[ using gnu : section(".vectors"), used ]]
-flashVectorT flashVector{ stackTop, {resetFunc, resetFunc, resetFunc} };
+flashVectorT flashVector{ stackTop, {resetFunc, errorFunc, errorFunc} };
 
 
 /*-----------------------------------------------------------------------------
@@ -70,18 +71,14 @@ flashVectorT flashVector{ stackTop, {resetFunc, resetFunc, resetFunc} };
 -----------------------------------------------------------------------------*/
                 #pragma GCC push_options
                 #pragma GCC optimize ("-Os")
-
                 IIA
-delayCycles     (volatile i32 n) { while(n -= CYCLES_PER_LOOP, n>0){} }
-
-                IIA 
-delayMS         (u16 ms){ delayCycles(FCPU/1000*ms-1); }
-
+delayCycles     (volatile u32 n) { while(n -= CYCLES_PER_LOOP, n > CYCLES_PER_LOOP){} }
+                IIA
+delayMS         (u16 ms){ delayCycles(FCPU_MHZ*1000*ms); }
                 #pragma GCC pop_options
 
                 IIA //start address, end address, value
 setmem          (u32* s, u32* e, u32 v) { while(s < e) *s++ = v; }
-
                 IIA //start address, end address, values
 cpymem          (u32* s, u32* e, u32* v) { while(s < e) *s++ = *v++; }
 
@@ -99,7 +96,7 @@ initVectors     ()
                 //(stack and reset also set, should be harmless)
                 setmem( ramvectorStart, ramvectorEnd, (u32)errorFunc );
                 //move vectors to ram
-                vtor = (u32)ramvectorStart;
+                VTOR = (u32)ramvectorStart;
                 }
 
                 IIA
