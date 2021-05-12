@@ -19,14 +19,14 @@ using flashVectorT = struct { u32* stackTop; void(*vfunc[3])(); };
     values added so we can init ram vector table in this startup code)
 -----------------------------------------------------------------------------*/
 //linker script symbols
-extern u32 _etext       [1];    //end of text
-extern u32 _sramvector  [1];    //start of ram vector
-extern u32 _eramvector  [1];
-extern u32 _srelocate   [1];    //data (initialized)
-extern u32 _erelocate   [1];
-extern u32 _szero       [1];    //bss (zeroed)
-extern u32 _ezero       [1];
-extern u32 _estack      [1];
+extern u32 _etext       [];     //end of text
+extern u32 _sramvector  [];     //start of ram vector
+extern u32 _eramvector  [];
+extern u32 _srelocate   [];     //data (initialized)
+extern u32 _erelocate   [];
+extern u32 _szero       [];     //bss (zeroed)
+extern u32 _ezero       [];
+extern u32 _estack      [];
 
 //setup linker symbols as u32 pointers (addresses), and nicer names
 static constexpr auto dataFlashStart    { _etext };
@@ -39,7 +39,7 @@ static constexpr auto bssEnd            { _ezero };
 static constexpr auto stackTop          { _estack };
 
 //SCB.VTOR (vector table offset)
-static volatile u32&  VTOR              { *(u32*)0xE000ED08 };
+static volatile auto& VTOR              { *(volatile u32*)0xE000ED08 };
 
 //for delay functions
 static constexpr u32  FCPU_MHZ          {16}; //16MHz at reset
@@ -112,7 +112,7 @@ initRam         ()
                 static void
 resetFunc       ()
                 {
-                delayMS(5000);  //time to allow swd hot-plug
+                delayMS( 5000 );//time to allow swd hot-plug
                 initVectors();  //setup ram vectors
                 initRam();      //normal data/bss init
 
