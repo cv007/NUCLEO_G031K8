@@ -72,7 +72,7 @@ flashVectorT flashVector{ stackTop, {resetFunc, errorFunc, errorFunc} };
                 #pragma GCC push_options
                 #pragma GCC optimize ("-Os")
                 IIA
-delayCycles     (volatile u32 n) { while(n -= CYCLES_PER_LOOP, n > CYCLES_PER_LOOP){} }
+delayCycles     (volatile u32 n) { while(n -= CYCLES_PER_LOOP, n >= CYCLES_PER_LOOP){} }
                 IIA
 delayMS         (u16 ms){ delayCycles(FCPU_MHZ*1000*ms); }
                 #pragma GCC pop_options
