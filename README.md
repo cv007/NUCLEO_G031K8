@@ -16,8 +16,6 @@
 
 #### Also demonstrated, is that the startup code is not difficult for cortex-m, and moving the vector table to ram is also easy. The linker script makes slight modifications to the typcical cortex-m linker script- the addition of a .ramvector section along with some symbols to provide its addresses, and adding a stack checking assert to warn about lack of stack space (which you specified the amount wanted).
 
-#### An initial development version (all-in-one) can be seen in the online compiler - https://godbolt.org/z/hf63Wf5qY where it is now split out into appropriate headers here. The ideas were developed in the online compiler and later moved to the pc.
-
 #### So, you do not need to stick to the manufacturers way of doing things if you prefer something better. The C++ language is also quite nice and as seen here there is no C++ standard library in use and there is no requirement to use it. The C++ language itself has quite a nice toolbox, and is a good fit for the mcu. 
 
 #### Although doing everything on your own is possible as shown here, you will soon run into the problem of being overwhelmed with things that need to be done on your own. The companion project NUCLEO_G031K8_B uses the CMSIS files and the mcu header from ST to make things easier (these headers are not hard to find). The C++ code stays the same, but now we get some help in the mundane area of mcu register names and addresses, and the price paid is living with the names they provide and the way they do things. In any case, our functions hide all that and the normal code you create will not require dealing with any manufacturer code since the functions are your interface to the mcu.
