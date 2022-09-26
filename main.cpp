@@ -6,7 +6,9 @@
 /*-------------------------------------------------------------
     main
 --------------------------------------------------------------*/
-//D12 on Nucleo
+//'uart' and 'board' instances already created in MyStm32.hpp
+
+//using pin D12 on Nucleo board as a switch
 auto sw = GpioPin(board.D[12],LOWISON).mode(INPUT).pull(PULLUP);
 
                 int
